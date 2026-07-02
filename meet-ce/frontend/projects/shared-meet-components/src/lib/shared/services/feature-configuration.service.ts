@@ -28,7 +28,7 @@ const DEFAULT_FEATURES: ApplicationFeatures = {
 	showSettings: true,
 	showFullscreen: true,
 	showThemeSelector: true,
-	allowLayoutSwitching: true,
+	allowLayoutSwitching: false,
 
 	canModerateRoom: false,
 	canRecordRoom: false,
