@@ -34,7 +34,7 @@ const DEFAULT_FEATURES: RoomFeatures = {
 	showParticipantList: true,
 	showSettings: true,
 	showThemeSelector: true,
-	showLayoutSelector: true,
+	showLayoutSelector: false,
 	showShareAccessLinks: false,
 	showEndMeeting: false,
 	showMakeModerator: false,
