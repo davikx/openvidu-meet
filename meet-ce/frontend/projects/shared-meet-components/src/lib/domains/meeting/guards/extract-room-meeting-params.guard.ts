@@ -26,7 +26,9 @@ export const extractRoomMeetingParamsGuard: CanActivateFn = (route: ActivatedRou
 		leaveRedirectUrl,
 		showOnlyRecordings,
 		showRecording,
-		e2eeKey
+		e2eeKey,
+		skipLobby,
+		skipPrejoin
 	} = extractParams(route);
 
 	const decision = meetingEntry.prepare({
@@ -44,7 +46,9 @@ export const extractRoomMeetingParamsGuard: CanActivateFn = (route: ActivatedRou
 		language,
 		showLanguageSelector: parseOptionalBoolean(showLanguageSelector),
 		showRecording,
-		showOnlyRecordings: showOnlyRecordings === 'true'
+		showOnlyRecordings: showOnlyRecordings === 'true',
+		skipLobby: skipLobby === 'true',
+		skipPrejoin: skipPrejoin === 'true'
 	});
 
 	if (decision.kind === 'redirect') {
