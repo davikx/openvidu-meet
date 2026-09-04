@@ -16,7 +16,7 @@
 } @else if (!isMeetingLeft()) {
 	<ov-meeting-view
 		[token]="roomMemberToken()!"
-		[prejoin]="true"
+		[prejoin]="!skipPrejoin()"
 		[videoEnabled]="features().videoEnabled"
 		[audioEnabled]="features().audioEnabled"
 		[e2eeKey]="e2eeKey()"

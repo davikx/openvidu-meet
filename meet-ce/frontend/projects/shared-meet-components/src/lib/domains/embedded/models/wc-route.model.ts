@@ -28,6 +28,8 @@ export interface MeetingRoute {
 		e2eeKey?: string;
 		participantName?: string;
 		leaveRedirectUrl?: string;
+		skipLobby?: boolean;
+		skipPrejoin?: boolean;
 	};
 }
 

@@ -60,7 +60,9 @@ export const wcRouteFromAttributes = (inputs: WebComponentPropertyValues): WcRou
 				secret: queryParam(roomUrl, 'secret') ?? undefined,
 				e2eeKey: inputs.e2eeKey || undefined,
 				participantName: inputs.participantName || undefined,
-				leaveRedirectUrl: inputs.leaveRedirectUrl || undefined
+				leaveRedirectUrl: inputs.leaveRedirectUrl || undefined,
+				skipLobby: inputs.skipLobby || undefined,
+				skipPrejoin: inputs.skipPrejoin || undefined
 			}
 		};
 	}

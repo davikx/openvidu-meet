@@ -26,6 +26,8 @@ export class MeetingContextService {
 	private readonly _hasRecordings = signal<boolean>(false);
 	private readonly _isActiveMeeting = signal<boolean>(false);
 	private readonly _meetingEndedBy = signal<'self' | 'other' | null>(null);
+	private readonly _skipLobby = signal<boolean>(false);
+	private readonly _skipPrejoin = signal<boolean>(false);
 
 	/** Readonly signal for the current room ID */
 	readonly roomId = this._roomId.asReadonly();
@@ -43,6 +45,10 @@ export class MeetingContextService {
 	readonly meetingEndedBy = this._meetingEndedBy.asReadonly();
 	/** Readonly signal for whether the meeting is active */
 	readonly isActiveMeeting = this._isActiveMeeting.asReadonly();
+	/** Readonly signal for whether the lobby screen must be skipped */
+	readonly skipLobby = this._skipLobby.asReadonly();
+	/** Readonly signal for whether the prejoin screen must be skipped */
+	readonly skipPrejoin = this._skipPrejoin.asReadonly();
 
 	/** Readonly signal for meeting features */
 	readonly meetingUI = this.roomFeatureService.features;
@@ -133,6 +139,22 @@ export class MeetingContextService {
 	}
 
 	/**
+	 * Sets whether the lobby screen must be skipped
+	 * @param skip True to join the meeting directly without the lobby
+	 */
+	setSkipLobby(skip: boolean): void {
+		this._skipLobby.set(skip);
+	}
+
+	/**
+	 * Sets whether the prejoin screen must be skipped
+	 * @param skip True to skip the camera/microphone preview
+	 */
+	setSkipPrejoin(skip: boolean): void {
+		this._skipPrejoin.set(skip);
+	}
+
+	/**
 	 * Clears all meeting-scoped state:
 	 * - room member context
 	 * - meeting context
@@ -161,5 +183,7 @@ export class MeetingContextService {
 		this._hasRecordings.set(false);
 		this._isActiveMeeting.set(false);
 		this._meetingEndedBy.set(null);
+		this._skipLobby.set(false);
+		this._skipPrejoin.set(false);
 	}
 }

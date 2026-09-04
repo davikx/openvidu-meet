@@ -126,7 +126,9 @@ describe('extractParams', () => {
 			leaveRedirectUrl: 'https://back',
 			showOnlyRecordings: 'true',
 			showRecording: 'rec-1',
-			e2eeKey: 'k'
+			e2eeKey: 'k',
+			skipLobby: 'false',
+			skipPrejoin: 'false'
 		});
 	});
 
@@ -135,6 +137,19 @@ describe('extractParams', () => {
 		expect(result.showOnlyRecordings).toBe('false');
 		expect(result.secret).toBeUndefined();
 		expect(result.participantName).toBeUndefined();
+	});
+
+	it('reads skip-lobby and skip-prejoin, defaulting both to "false"', () => {
+		const result = extractParams({
+			params: { 'room-id': 'r1' },
+			queryParams: { [EmbeddedAttribute.SKIP_LOBBY]: 'true', [EmbeddedAttribute.SKIP_PREJOIN]: 'true' }
+		});
+		expect(result.skipLobby).toBe('true');
+		expect(result.skipPrejoin).toBe('true');
+
+		const defaults = extractParams({ params: { 'room-id': 'r1' }, queryParams: {} });
+		expect(defaults.skipLobby).toBe('false');
+		expect(defaults.skipPrejoin).toBe('false');
 	});
 });
 

@@ -80,6 +80,8 @@ export class MeetingComponent implements OnInit, OnDestroy {
 	e2eeKey = this.lobbyService.e2eeKeyValue;
 	features = this.meetingContextService.meetingUI;
 	hasRecordings = this.meetingContextService.hasRecordings;
+	skipLobby = this.meetingContextService.skipLobby;
+	skipPrejoin = this.meetingContextService.skipPrejoin;
 
 	constructor() {
 		// Change theme variables when custom theme is enabled.
@@ -113,6 +115,11 @@ export class MeetingComponent implements OnInit, OnDestroy {
 		try {
 			this.lobbyState.set('loading');
 			await this.lobbyService.initialize();
+
+			if (this.skipLobby()) {
+				await this.lobbyService.joinWithoutLobby();
+			}
+
 			this.lobbyState.set('ready');
 		} catch (error) {
 			console.error('Error initializing lobby state:', error);
