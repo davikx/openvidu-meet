@@ -34,6 +34,8 @@ export interface MeetingRoute {
 		language?: string;
 		showLanguageSelector?: boolean;
 		leaveRedirectUrl?: string;
+		skipLobby?: boolean;
+		skipPrejoin?: boolean;
 	};
 }
 
