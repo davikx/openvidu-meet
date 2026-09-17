@@ -37,3 +37,4 @@ configRouter.get('/rooms/appearance', withAuth(allowAnonymous), globalConfigCtrl
 
 // Captions config
 configRouter.get('/captions', withAuth(allowAnonymous), globalConfigCtrl.getCaptionsConfig);
+configRouter.get('/meeting-layout', withAuth(allowAnonymous), globalConfigCtrl.getMeetingLayoutConfig);
