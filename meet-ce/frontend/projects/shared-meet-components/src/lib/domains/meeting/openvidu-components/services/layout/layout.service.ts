@@ -83,7 +83,7 @@ export class BaseLayoutService {
 	protected getViewportProfile(): ViewportProfile {
 		const isPortrait = this.viewportSrv.isPortrait();
 
-		if (this.viewportSrv.isMobile()) {
+		if (this.viewportSrv.isMobile() || this.viewportSrv.isShortLandscape()) {
 			return isPortrait ? 'mobilePortrait' : 'mobileLandscape';
 		}
 

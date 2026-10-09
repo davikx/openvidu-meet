@@ -171,7 +171,7 @@ export const VIEWPORT_LAYOUT_PROFILES: Record<ViewportProfile, LayoutProfile> = 
 	},
 	mobileLandscape: {
 		maxRatio: 16 / 9,
-		minRatio: 3 / 4,
+		minRatio: 9 / 16,
 		bigMaxRatio: 16 / 9,
 		bigMinRatio: 9 / 16,
 		bigPercentage: 0.82,

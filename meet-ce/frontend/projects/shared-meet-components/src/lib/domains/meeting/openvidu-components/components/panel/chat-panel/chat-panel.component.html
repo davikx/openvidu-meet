@@ -1,13 +1,9 @@
 <div class="panel-container" id="chat-container">
 	<div class="panel-header-container">
 		<h3 class="panel-title">{{ 'PANEL.CHAT.TITLE' | translate }}</h3>
-		<button
-			class="panel-close-button"
-			mat-icon-button
-			matTooltip="{{ 'PANEL.CLOSE' | translate }}"
-			(click)="close()"
-		>
+		<button class="panel-close-button chat-close-button" mat-flat-button (click)="close()">
 			<mat-icon>close</mat-icon>
+			{{ 'PANEL.CLOSE' | translate }}
 		</button>
 	</div>
 
