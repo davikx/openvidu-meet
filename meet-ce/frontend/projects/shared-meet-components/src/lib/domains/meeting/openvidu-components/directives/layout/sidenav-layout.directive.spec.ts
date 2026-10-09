@@ -109,6 +109,63 @@ describe('SidenavLayoutDirective', () => {
 		expect(host.sidenav().opened).toBeTrue();
 	});
 
+	it('reports the chat sheet only while the chat is open over a narrow container', async () => {
+		createFixture();
+
+		panelService.togglePanel(PanelType.CHAT);
+		fixture.detectChanges();
+		expect(host.sidenavLayout().isChatSheetOpened()).toBeFalse();
+
+		host.containerWidth.set(600);
+		fixture.detectChanges();
+		await waitFor(() => host.sidenavLayout().mode() === SidenavMode.OVER);
+		expect(host.sidenavLayout().isChatSheetOpened()).toBeTrue();
+
+		panelService.togglePanel(PanelType.PARTICIPANTS);
+		fixture.detectChanges();
+		expect(host.sidenavLayout().isChatSheetOpened()).toBeFalse();
+
+		panelService.togglePanel(PanelType.CHAT);
+		panelService.togglePanel(PanelType.CHAT);
+		fixture.detectChanges();
+		expect(host.sidenavLayout().isChatSheetOpened()).toBeFalse();
+	});
+
+	it('closes the panel when the drawer is closed from outside it, as a tap on the backdrop does', async () => {
+		createFixture();
+		host.containerWidth.set(600);
+		fixture.detectChanges();
+		await waitFor(() => host.sidenavLayout().mode() === SidenavMode.OVER);
+
+		panelService.togglePanel(PanelType.CHAT);
+		fixture.detectChanges();
+		expect(host.sidenavLayout().isChatSheetOpened()).toBeTrue();
+
+		void host.sidenav().close();
+
+		await waitFor(() => !panelService.isPanelOpened());
+		expect(host.sidenavLayout().isChatSheetOpened()).toBeFalse();
+	});
+
+	it('recomputes the layout when the chat sheet replaces another panel over a narrow container', async () => {
+		withToolbarTemplate();
+		createFixture();
+		host.containerWidth.set(600);
+		fixture.detectChanges();
+		await waitFor(() => host.sidenavLayout().mode() === SidenavMode.OVER);
+
+		panelService.togglePanel(PanelType.PARTICIPANTS);
+		fixture.detectChanges();
+		await waitUntilQuiet(layoutUpdateSpy, 500);
+		layoutUpdateSpy.calls.reset();
+
+		panelService.togglePanel(PanelType.CHAT);
+		fixture.detectChanges();
+
+		await waitFor(() => layoutUpdateSpy.calls.count() >= 4);
+		expect(layoutUpdateSpy.calls.count()).toBeGreaterThanOrEqual(4);
+	});
+
 	it('gives the container the full height when no toolbar template is registered', async () => {
 		createFixture();
 

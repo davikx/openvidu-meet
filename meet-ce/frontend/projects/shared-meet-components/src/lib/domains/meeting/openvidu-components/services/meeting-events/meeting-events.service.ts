@@ -31,6 +31,7 @@ import { MeetingLiveKitService } from '../meeting-livekit/meeting-livekit.servic
 import { ParticipantService } from '../participant/participant.service';
 import { RecordingService } from '../recording/recording.service';
 import { MeetingTranslateService } from '../translate/meeting-translate.service';
+import { ViewportService } from '../viewport/viewport.service';
 import { DialogService } from '../../../../../shared/services/dialog.service';
 import { LoggerService } from '../../../../../shared/services/logger.service';
 import { MeetStorageService } from '../../../../../shared/services/storage.service';
@@ -62,6 +63,7 @@ export class MeetingEventsService {
 	private readonly meetStorageService = inject(MeetStorageService);
 	private readonly recordingService = inject(RecordingService);
 	private readonly translateService = inject(MeetingTranslateService);
+	private readonly viewportService = inject(ViewportService);
 	private readonly log = this.loggerSrv.get('MeetingEventsService');
 	private readonly _activeSpeakers = signal<Participant[]>([]);
 	readonly activeSpeakers = this._activeSpeakers.asReadonly();
@@ -123,7 +125,8 @@ export class MeetingEventsService {
 			// has explicitly docked their tile before (persisted preference wins over the default).
 			if (
 				this.participantService.remoteParticipants().length === 1 &&
-				this.meetStorageService.getLocalTileFloating() !== false
+				this.meetStorageService.getLocalTileFloating() !== false &&
+				!this.viewportService.isShortLandscape()
 			) {
 				this.streamLayoutService.floatLocalCameraVideo(this.participantService.localParticipant());
 			}

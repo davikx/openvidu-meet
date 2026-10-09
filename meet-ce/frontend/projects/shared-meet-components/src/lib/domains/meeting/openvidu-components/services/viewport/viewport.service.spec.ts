@@ -120,19 +120,37 @@ describe('ViewportService', () => {
 		expect(createService().isTabletDown()).toBeFalse();
 	});
 
-	// The warning is about the hardware, not the window: a landscape desktop must never see it.
-	it('warns about landscape only on a physical phone', () => {
+	it('never asks a phone held in landscape to rotate back to portrait', () => {
+		platform.isPhysicalMobileDevice = () => true;
 		sizeViewport(900, 400);
 
 		expect(createService().shouldShowLandscapeWarning()).toBeFalse();
+	});
 
+	it('reads a wide and short viewport on a phone as a short landscape, and nothing else as one', () => {
 		platform.isPhysicalMobileDevice = () => true;
 
-		expect(createService().shouldShowLandscapeWarning()).toBeTrue();
+		const shortLandscapeAt = (width: number, height: number): boolean => {
+			sizeViewport(width, height);
 
-		sizeViewport(400, 900);
+			return createService().isShortLandscape();
+		};
 
-		expect(createService().shouldShowLandscapeWarning()).toBeFalse();
+		expect([shortLandscapeAt(735, 218), shortLandscapeAt(780, 340), shortLandscapeAt(560, 500)]).toEqual([
+			true,
+			true,
+			true
+		]);
+		expect([
+			shortLandscapeAt(360, 600),
+			shortLandscapeAt(360, 300),
+			shortLandscapeAt(559, 300),
+			shortLandscapeAt(1024, 501)
+		]).toEqual([false, false, false, false]);
+
+		platform.isPhysicalMobileDevice = () => false;
+
+		expect(shortLandscapeAt(735, 218)).toBeFalse();
 	});
 
 	it('gathers everything a responsive template asks for into one view', () => {

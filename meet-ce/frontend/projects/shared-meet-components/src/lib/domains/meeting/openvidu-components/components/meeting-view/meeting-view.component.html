@@ -46,7 +46,12 @@
 		@if (viewportService.shouldShowLandscapeWarning()) {
 			<ov-landscape-warning />
 		}
-		<div id="meeting-stage" [animate.enter]="enterAnimationClass" [animate.leave]="'ov-fade-out-200'">
+		<div
+			id="meeting-stage"
+			[class.short-landscape]="viewportService.isShortLandscape()"
+			[animate.enter]="enterAnimationClass"
+			[animate.leave]="'ov-fade-out-200'"
+		>
 			<!-- Meeting-wide status stays visible even when the host renders no toolbar. -->
 			@if (showStatusRail()) {
 				<div id="status-rail" class="status-rail">
@@ -118,6 +123,7 @@
 				ovSidenavLayout
 				#sidenavLayout="ovSidenavLayout"
 				class="sidenav-container"
+				[class.chat-sheet]="sidenavLayout.isChatSheetOpened()"
 				[hasBackdrop]="sidenavLayout.hasBackdrop()"
 			>
 				<mat-sidenav

@@ -135,6 +135,15 @@ describe('StreamLayoutStateService', () => {
 			expect(participant.isFloating).toBeFalse();
 		});
 
+		it('leaves a pinned local camera where it is instead of floating it', () => {
+			service.toggleStreamPinned(cameraStream().streamId);
+
+			service.floatLocalCameraVideo(participant);
+
+			expect(participant.isFloating).toBeFalse();
+			expect(cameraStream().isPinned).toBeTrue();
+		});
+
 		it('does not float twice when already floating', () => {
 			service.floatLocalCameraVideo(participant);
 			service.floatLocalCameraVideo(participant);

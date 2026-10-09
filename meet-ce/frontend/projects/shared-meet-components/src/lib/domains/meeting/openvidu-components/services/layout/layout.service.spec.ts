@@ -42,6 +42,7 @@ class FakeViewportService {
 	readonly height = signal(650);
 	readonly isMobile = signal(false);
 	readonly isTablet = signal(false);
+	readonly isShortLandscape = signal(false);
 	readonly orientation = computed(() => (this.width() > this.height() ? 'landscape' : 'portrait'));
 	readonly viewportInfo = computed(() => ({ width: this.width(), height: this.height() }));
 

@@ -1,3 +1,50 @@
+.panel-close-button.chat-close-button {
+	--mat-button-filled-container-color: var(--ov-error-color);
+	--mat-button-filled-label-text-color: #ffffff;
+	--mat-button-filled-state-layer-color: #ffffff;
+	--mat-button-filled-ripple-color: rgba(255, 255, 255, 0.2);
+
+	border-radius: var(--ov-surface-radius);
+	color: #ffffff;
+	font-weight: 600;
+}
+
+:host-context(.chat-sheet),
+:host-context(.short-landscape) {
+	.panel-header-container {
+		padding: 4px 10px;
+	}
+
+	.text-container {
+		display: none;
+	}
+}
+
+:host-context(.short-landscape) {
+	.messages-container {
+		min-height: 0;
+		padding: 6px 10px;
+	}
+
+	.input-container {
+		height: 40px;
+		margin: 6px 8px 8px;
+		padding: 4px 4px 4px 10px;
+	}
+
+	.input-container textarea {
+		height: 40px;
+	}
+
+	.vertical-align {
+		line-height: 40px;
+	}
+
+	#send-btn {
+		height: 40px;
+	}
+}
+
 .encryption-warning {
 	display: flex;
 	align-items: center;

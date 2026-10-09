@@ -14,7 +14,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatSidenav, MatSidenavContainer } from '@angular/material/sidenav';
 import { RuntimeConfigService } from '../../../../../shared/services/runtime-config.service';
 import { SidenavMode } from '../../models/layout/layout.model';
-import { PanelStatusInfo } from '../../models/panel.model';
+import { PanelStatusInfo, PanelType } from '../../models/panel.model';
 import { SmartLayoutService } from '../../services/layout/smart-layout.service';
 import { PanelService } from '../../services/panel/panel.service';
 import { TemplateRegistryService } from '../../services/template/template-registry.service';
@@ -73,6 +73,11 @@ export class SidenavLayoutDirective implements OnDestroy {
 	/** SIDE (pushes the content) or OVER (overlays it), driven by the container width. */
 	readonly mode = this._mode.asReadonly();
 	readonly hasBackdrop = computed(() => this._mode() === SidenavMode.OVER);
+
+	readonly isChatSheetOpened = computed(() => {
+		const panel = this.panelService.panelOpened();
+		return this.hasBackdrop() && panel.isOpened && panel.panelType === PanelType.CHAT;
+	});
 
 	private boundSidenav: MatSidenav | undefined = undefined;
 	private layoutUpdateTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -152,13 +157,29 @@ export class SidenavLayoutDirective implements OnDestroy {
 			this.layoutService.update();
 		});
 		sidenav.openedStart.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.startUpdateLayoutInterval());
-		sidenav.closedStart.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.startUpdateLayoutInterval());
+		sidenav.closedStart.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+			this.startUpdateLayoutInterval();
+
+			if (this.panelService.isPanelOpened()) {
+				this.panelService.closePanel();
+			}
+		});
 
 		// The panel may already have been opened before the sidenav existed.
 		this.applyPanelState(this.panelService.panelOpened(), sidenav);
 	}
 
 	private applyPanelState(panel: PanelStatusInfo, sidenav: MatSidenav): void {
+		if (sidenav.opened && panel.isOpened) {
+			const involvesChatSheet =
+				this.hasBackdrop() &&
+				(panel.panelType === PanelType.CHAT || panel.previousPanelType === PanelType.CHAT);
+
+			if (involvesChatSheet) {
+				this.startUpdateLayoutInterval();
+			}
+		}
+
 		if (panel.isOpened !== sidenav.opened) {
 			if (panel.isOpened) {
 				sidenav.open();

@@ -108,7 +108,7 @@ export class StreamLayoutStateService implements ParticipantViewStateReader {
 
 		const cameraStream = local.streams().find((s) => s.isCameraStream);
 
-		if (cameraStream) this.toggleStreamFloating(cameraStream.streamId);
+		if (cameraStream && !cameraStream.isPinned) this.toggleStreamFloating(cameraStream.streamId);
 	}
 
 	/**

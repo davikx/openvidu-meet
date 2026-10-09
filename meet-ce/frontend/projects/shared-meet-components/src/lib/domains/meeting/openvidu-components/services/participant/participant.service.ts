@@ -1,4 +1,4 @@
-import { Service, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
+import { Service, Signal, WritableSignal, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ParticipantModel, ParticipantProperties } from '../../models/participant.model';
 import { E2eeService } from '../e2ee/e2ee.service';
 import type { DataPublishOptions, LocalParticipant, Participant, RemoteParticipant } from '../livekit';
@@ -6,6 +6,7 @@ import { ConnectionQuality, Track } from '../livekit';
 import { LocalMediaService } from '../local-media/local-media.service';
 import { StreamLayoutStateService } from '../layout/stream-layout-state.service';
 import { MeetingLiveKitService } from '../meeting-livekit/meeting-livekit.service';
+import { ViewportService } from '../viewport/viewport.service';
 import { LoggerService } from '../../../../../shared/services/logger.service';
 import { MeetStorageService } from '../../../../../shared/services/storage.service';
 
@@ -16,6 +17,7 @@ export class ParticipantService {
 	private readonly streamLayoutService = inject(StreamLayoutStateService);
 	private readonly meetStorageService = inject(MeetStorageService);
 	private readonly e2eeService = inject(E2eeService);
+	private readonly viewportService = inject(ViewportService);
 	private readonly log = inject(LoggerService).get('ParticipantService');
 
 	/**
@@ -41,6 +43,18 @@ export class ParticipantService {
 	readonly hasRemoteEncryptionErrorsSignal = computed(() =>
 		this._remoteParticipants().some((participant) => participant.hasEncryptionError)
 	);
+
+	private readonly localCameraPlacementEffect = effect(() => {
+		const shortLandscape = this.viewportService.isShortLandscape();
+
+		untracked(() => {
+			if (shortLandscape) {
+				this.streamLayoutService.dockLocalCameraVideo(this._localParticipant());
+			} else if (this.shouldFloatLocalCameraByDefault()) {
+				this.streamLayoutService.floatLocalCameraVideo(this._localParticipant());
+			}
+		});
+	});
 
 	/**
 	 * @internal
@@ -90,9 +104,13 @@ export class ParticipantService {
 		});
 
 		// Auto-float on entry too, unless the user has explicitly docked their tile before.
-		if (this._remoteParticipants().length > 0 && this.meetStorageService.getLocalTileFloating() !== false) {
+		if (!this.viewportService.isShortLandscape() && this.shouldFloatLocalCameraByDefault()) {
 			this.streamLayoutService.floatLocalCameraVideo(this._localParticipant());
 		}
+	}
+
+	private shouldFloatLocalCameraByDefault(): boolean {
+		return this._remoteParticipants().length > 0 && this.meetStorageService.getLocalTileFloating() !== false;
 	}
 
 	/** Floats the local camera video over the layout or docks it into the grid, and remembers the choice. */

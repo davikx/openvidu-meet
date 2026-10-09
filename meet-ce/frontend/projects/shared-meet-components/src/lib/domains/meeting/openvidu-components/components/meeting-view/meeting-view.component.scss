@@ -204,6 +204,28 @@
 	z-index: 1;
 }
 
+.sidenav-container.chat-sheet {
+	--ov-chat-sheet-height: min(100%, max(40%, 240px));
+
+	.sidenav-menu {
+		top: auto !important;
+		height: var(--ov-chat-sheet-height);
+	}
+
+	.sidenav-main {
+		height: calc(100% - var(--ov-chat-sheet-height));
+		min-height: 0;
+	}
+
+	#layout-container {
+		height: 100%;
+	}
+
+	::ng-deep .mat-drawer-backdrop.mat-drawer-shown {
+		background-color: transparent;
+	}
+}
+
 .mat-drawer.mat-drawer-side {
 	z-index: 0 !important;
 }
@@ -257,6 +279,41 @@
 
 	::ng-deep .mat-drawer-backdrop.mat-drawer-shown {
 		z-index: 1001 !important;
+	}
+}
+
+#meeting-stage.short-landscape {
+	--ov-status-rail-height: 0px;
+
+	.status-rail {
+		display: none;
+	}
+
+	&:has(.recording-chip),
+	&:has(.ending-soon-chip),
+	&:has(.e2ee-chip),
+	&:has(.status-rail-end) {
+		--ov-status-rail-height: 37px;
+
+		.status-rail {
+			display: flex;
+		}
+	}
+
+	.sidenav-container.chat-sheet {
+		--ov-chat-sheet-width: 45%;
+
+		.sidenav-menu {
+			top: 0 !important;
+			width: var(--ov-chat-sheet-width) !important;
+			max-width: var(--ov-chat-sheet-width) !important;
+			height: auto;
+		}
+
+		.sidenav-main {
+			width: calc(100% - var(--ov-chat-sheet-width));
+			height: 100%;
+		}
 	}
 }
 

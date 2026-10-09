@@ -16,6 +16,7 @@ import { MeetingLiveKitService } from '../meeting-livekit/meeting-livekit.servic
 import { ParticipantService } from '../participant/participant.service';
 import { RecordingService } from '../recording/recording.service';
 import { MeetingTranslateService } from '../translate/meeting-translate.service';
+import { ViewportService } from '../viewport/viewport.service';
 import { MeetingEventCallbacks, MeetingEventsService, MeetSignal } from './meeting-events.service';
 
 class LoggerServiceStub {
@@ -194,9 +195,11 @@ describe('MeetingEventsService (reconnection view state)', () => {
 	let callbacks: MeetingEventCallbacks;
 	let dialogService: jasmine.SpyObj<DialogService>;
 	let recordingService: jasmine.SpyObj<RecordingService>;
+	let shortLandscape: boolean;
 
 	beforeEach(() => {
 		remotes = [];
+		shortLandscape = false;
 		streamLayoutService = jasmine.createSpyObj<StreamLayoutStateService>('StreamLayoutStateService', [
 			'dockLocalCameraVideo',
 			'floatLocalCameraVideo',
@@ -247,7 +250,8 @@ describe('MeetingEventsService (reconnection view state)', () => {
 				{ provide: ChatService, useValue: {} },
 				{ provide: MeetingUiConfigService, useValue: {} },
 				{ provide: RecordingService, useValue: recordingService },
-				{ provide: MeetStorageService, useValue: meetStorageService }
+				{ provide: MeetStorageService, useValue: meetStorageService },
+				{ provide: ViewportService, useValue: { isShortLandscape: () => shortLandscape } }
 			]
 		});
 
@@ -347,6 +351,14 @@ describe('MeetingEventsService (reconnection view state)', () => {
 
 	it('does not auto-float when the user has explicitly docked their tile before', () => {
 		meetStorageService.getLocalTileFloating.and.returnValue(false);
+
+		emit(RoomEvent.ParticipantConnected, remoteParticipant('PA_bob'));
+
+		expect(streamLayoutService.floatLocalCameraVideo).not.toHaveBeenCalled();
+	});
+
+	it('does not auto-float on a short landscape viewport, where the two videos sit side by side', () => {
+		shortLandscape = true;
 
 		emit(RoomEvent.ParticipantConnected, remoteParticipant('PA_bob'));
 
