@@ -20,6 +20,11 @@ export class ViewportService {
 		wide: 1200
 	} as const;
 
+	private readonly SHORT_LANDSCAPE = {
+		minWidth: 560,
+		maxHeight: 500
+	} as const;
+
 	// Reactive signals
 	private readonly _width = signal(this.getCurrentWidth());
 	private readonly _height = signal(this.getCurrentHeight());
@@ -65,12 +70,13 @@ export class ViewportService {
 	 */
 	readonly isTablet = computed(() => this.viewportSize() === 'tablet' && this.platform.isTouchDevice());
 
-	/**
-	 * Whether device should show mobile landscape warning
-	 * This is orientation-independent and hardware-based detection
-	 */
-	readonly shouldShowLandscapeWarning = computed(() =>
-		this.platform.isPhysicalMobileDevice() && this.orientation() === 'landscape'
+	readonly shouldShowLandscapeWarning = signal(false).asReadonly();
+
+	readonly isShortLandscape = computed(
+		() =>
+			this._width() >= this.SHORT_LANDSCAPE.minWidth &&
+			this._height() <= this.SHORT_LANDSCAPE.maxHeight &&
+			this.platform.isPhysicalMobileDevice()
 	);
 
 	/**

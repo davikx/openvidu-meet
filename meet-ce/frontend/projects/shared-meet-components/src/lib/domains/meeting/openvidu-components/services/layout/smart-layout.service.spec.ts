@@ -10,6 +10,7 @@ import { SmartLayoutService } from './smart-layout.service';
 const viewport = {
 	isMobile: signal(false),
 	isTablet: signal(false),
+	isShortLandscape: signal(false),
 	orientation: computed(() => 'landscape'),
 	isPortrait: () => false,
 	viewportInfo: signal({ isPhysicalMobile: false, isPhysicalTablet: false })
