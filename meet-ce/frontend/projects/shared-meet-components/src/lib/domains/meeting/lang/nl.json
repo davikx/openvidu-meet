@@ -1,6 +1,7 @@
 {
 	"ROOM": {
 		"JOINING": "Deelnemen aan meeting...",
+		"REFRESH_VIDEO": "Video vernieuwen",
 		"LANDSCAPE_WARNING": "Draai uw apparaat voor een betere ervaring naar portretmodus",
 		"DISCONNECTED": "U heeft de meeting verlaten",
 		"DISCONNECTED_SUBTITLE": "De meeting is beëindigd",

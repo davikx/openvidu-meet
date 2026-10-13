@@ -142,7 +142,7 @@ export class ToolbarComponent implements OnInit, OnDestroy, AfterViewInit {
 	/**
 	 * @internal
 	 */
-	private readonly lastKnownChatMessageCount = signal(0);
+	private readonly lastKnownChatMessageCount = signal(this.chatService.chatMessages().length);
 	/**
 	 * @ignore
 	 * Local media state, read from its single owner. These used to be local signals synced against

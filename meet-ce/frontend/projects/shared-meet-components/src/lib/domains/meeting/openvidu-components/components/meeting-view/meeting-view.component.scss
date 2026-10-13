@@ -242,7 +242,7 @@ $side-panel-width: 380px;
 	&:has(.recording-chip),
 	&:has(.ending-soon-chip),
 	&:has(.e2ee-chip),
-	&:has(.status-rail-end) {
+	&:has(.status-rail-end ov-hidden-participants-indicator) {
 		--ov-status-rail-height: 37px;
 
 		.status-rail {

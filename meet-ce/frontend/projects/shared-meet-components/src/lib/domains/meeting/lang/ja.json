@@ -1,6 +1,7 @@
 {
 	"ROOM": {
 		"JOINING": "会議に参加しています...",
+		"REFRESH_VIDEO": "ビデオを更新",
 		"LANDSCAPE_WARNING": "より良い体験のために、デバイスを縦向きに回転させてください",
 		"DISCONNECTED": "会議から退出しました",
 		"DISCONNECTED_SUBTITLE": "会議が終了しました",

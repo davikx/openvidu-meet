@@ -95,6 +95,25 @@ export class LocalMediaService {
 		return this.setEnabled(this.microphone, enabled);
 	}
 
+	refreshCamera(): Promise<void> {
+		return this.run(async () => {
+			const track = this.camera.track();
+
+			if (!track || !this.camera.wanted()) return;
+
+			try {
+				await acquireDevice<unknown>(() => (track.isMuted ? track.unmute() : track.restartTrack()), this.log);
+			} catch (error) {
+				await track.mute();
+				this.reportUnavailable(Track.Kind.Video);
+
+				throw error;
+			}
+
+			if (!track.sender) await this.publishTracks([track]);
+		});
+	}
+
 	switchCamera(deviceId: string): Promise<void> {
 		return this.switchTo(this.camera, deviceId);
 	}

@@ -1,6 +1,7 @@
 {
 	"ROOM": {
 		"JOINING": "Connexion à la réunion...",
+		"REFRESH_VIDEO": "Actualiser la vidéo",
 		"LANDSCAPE_WARNING": "Veuillez faire pivoter votre appareil en mode portrait pour une meilleure expérience",
 		"DISCONNECTED": "Vous avez quitté la réunion",
 		"DISCONNECTED_SUBTITLE": "La réunion est terminée",

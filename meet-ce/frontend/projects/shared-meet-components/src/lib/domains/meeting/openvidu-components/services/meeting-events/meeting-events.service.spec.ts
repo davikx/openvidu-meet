@@ -5,7 +5,7 @@ import { LoggerService } from '../../../../../shared/services/logger.service';
 import { MeetStorageService } from '../../../../../shared/services/storage.service';
 import { DataTopic } from '../../models/data-topic.model';
 import { ParticipantModel } from '../../models/participant.model';
-import { ConnectionQuality, RemoteParticipant, Room, RoomEvent, Track } from '../../services/livekit';
+import { ConnectionQuality, DisconnectReason, RemoteParticipant, Room, RoomEvent, Track } from '../../services/livekit';
 import { DialogService } from '../../../../../shared/services/dialog.service';
 import { ChatService } from '../chat/chat.service';
 import { MeetingUiConfigService } from '../config/meeting-ui-config.service';
@@ -195,6 +195,7 @@ describe('MeetingEventsService (reconnection view state)', () => {
 	let callbacks: MeetingEventCallbacks;
 	let dialogService: jasmine.SpyObj<DialogService>;
 	let recordingService: jasmine.SpyObj<RecordingService>;
+	let chatService: jasmine.SpyObj<ChatService>;
 	let shortLandscape: boolean;
 
 	beforeEach(() => {
@@ -216,6 +217,7 @@ describe('MeetingEventsService (reconnection view state)', () => {
 			'closeBlockingDialog'
 		]);
 		recordingService = jasmine.createSpyObj<RecordingService>('RecordingService', ['setRecordingStopped']);
+		chatService = jasmine.createSpyObj<ChatService>('ChatService', ['forgetRoom']);
 
 		const participantServiceStub = {
 			addRemoteParticipant: () => remotes.push({} as ParticipantModel),
@@ -247,7 +249,7 @@ describe('MeetingEventsService (reconnection view state)', () => {
 					useValue: { getRoomName: () => 'room', shouldHandleClientInitiatedDisconnectEvent: true }
 				},
 				{ provide: MeetingTranslateService, useValue: { translate: (key: string) => key } },
-				{ provide: ChatService, useValue: {} },
+				{ provide: ChatService, useValue: chatService },
 				{ provide: MeetingUiConfigService, useValue: {} },
 				{ provide: RecordingService, useValue: recordingService },
 				{ provide: MeetStorageService, useValue: meetStorageService },
@@ -370,6 +372,19 @@ describe('MeetingEventsService (reconnection view state)', () => {
 		emit(RoomEvent.Disconnected, undefined);
 
 		expect(recordingService.setRecordingStopped).toHaveBeenCalledTimes(1);
+	});
+
+	it('forgets the chat of a meeting that was ended for everyone', () => {
+		emit(RoomEvent.Disconnected, DisconnectReason.ROOM_DELETED);
+
+		expect(chatService.forgetRoom).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps the chat of a meeting the participant only left or lost', () => {
+		emit(RoomEvent.Disconnected, undefined);
+		emit(RoomEvent.Disconnected, DisconnectReason.CLIENT_INITIATED);
+
+		expect(chatService.forgetRoom).not.toHaveBeenCalled();
 	});
 
 	it('keeps the recording across a reconnect', () => {

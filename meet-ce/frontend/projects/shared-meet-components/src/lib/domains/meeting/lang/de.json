@@ -1,6 +1,7 @@
 {
 	"ROOM": {
 		"JOINING": "Meeting wird betreten...",
+		"REFRESH_VIDEO": "Video aktualisieren",
 		"LANDSCAPE_WARNING": "Bitte drehen Sie Ihr Gerät für eine bessere Erfahrung in den Hochformatmodus",
 		"DISCONNECTED": "Sie haben das Meeting verlassen",
 		"DISCONNECTED_SUBTITLE": "Das Meeting wurde beendet",

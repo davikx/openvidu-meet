@@ -11,6 +11,7 @@
 	},
 	"ROOM": {
 		"JOINING": "Joining meeting...",
+		"REFRESH_VIDEO": "Refresh video",
 		"LANDSCAPE_WARNING": "Please rotate your device to portrait for a better experience",
 		"DISCONNECTED": "You have left the meeting",
 		"DISCONNECTED_SUBTITLE": "The meeting has ended",

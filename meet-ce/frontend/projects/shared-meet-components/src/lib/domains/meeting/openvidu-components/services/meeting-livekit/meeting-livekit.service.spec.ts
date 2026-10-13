@@ -123,7 +123,14 @@ describe('MeetingLiveKitService', () => {
 			onPhone(true);
 			service.init();
 
-			expect(roomOptions().adaptiveStream).toEqual({ pixelDensity: 1 });
+			expect(roomOptions().adaptiveStream).toEqual(jasmine.objectContaining({ pixelDensity: 1 }));
+		});
+
+		it('keeps receiving video on a phone whose page went to the background', () => {
+			onPhone(true);
+			service.init();
+
+			expect(roomOptions().adaptiveStream).toEqual(jasmine.objectContaining({ pauseVideoInBackground: false }));
 		});
 
 		it('keeps the microphone track open while muted', () => {

@@ -1,0 +1,12 @@
+@if (!isAlone()) {
+	<button
+		id="refresh-video-button"
+		class="refresh-video-button"
+		mat-flat-button
+		[disabled]="refreshing()"
+		(click)="refresh()"
+	>
+		<mat-icon [class.refreshing]="refreshing()">refresh</mat-icon>
+		{{ 'ROOM.REFRESH_VIDEO' | translate }}
+	</button>
+}
