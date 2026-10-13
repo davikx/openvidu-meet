@@ -1,6 +1,7 @@
 {
 	"ROOM": {
 		"JOINING": "正在加入会议...",
+		"REFRESH_VIDEO": "刷新视频",
 		"LANDSCAPE_WARNING": "请将设备旋转到纵向以获得最佳体验",
 		"DISCONNECTED": "您已离开会议",
 		"DISCONNECTED_SUBTITLE": "会议已结束",

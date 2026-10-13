@@ -126,7 +126,9 @@ export class MeetingLiveKitService {
 		const roomOptions: RoomOptions = {
 			// livekit-client asks for twice the size of a tile on screens denser than 2x, which on a
 			// phone is the capture layer for every tile, however small.
-			adaptiveStream: this.platformService.isPhysicalMobileDevice() ? { pixelDensity: 1 } : true,
+			adaptiveStream: this.platformService.isPhysicalMobileDevice()
+				? { pixelDensity: 1, pauseVideoInBackground: false }
+				: true,
 			dynacast: true,
 			audioCaptureDefaults: { ...MICROPHONE_CAPTURE_DEFAULTS },
 			videoCaptureDefaults: { ...CAMERA_CAPTURE_DEFAULTS },

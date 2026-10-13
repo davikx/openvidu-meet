@@ -8,6 +8,7 @@ import { MeetingCaptionsService } from '../../services/meeting-captions.service'
 import { MeetingContextService } from '../../services/meeting-context.service';
 import { MeetingStateService } from '../../services/meeting-state.service';
 import { MeetingCaptionsComponent } from '../meeting-captions/meeting-captions.component';
+import { MeetingVideoRefreshButtonComponent } from '../meeting-video-refresh-button/meeting-video-refresh-button.component';
 import { MeetingWaitingPanelComponent } from '../meeting-waiting-panel/meeting-waiting-panel.component';
 
 @Component({
@@ -17,6 +18,7 @@ import { MeetingWaitingPanelComponent } from '../meeting-waiting-panel/meeting-w
 		SmartLayoutComponent,
 		ShareRoomAccessLinkComponent,
 		MeetingCaptionsComponent,
+		MeetingVideoRefreshButtonComponent,
 		MeetingWaitingPanelComponent
 	],
 	templateUrl: './meeting-custom-layout.component.html',

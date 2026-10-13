@@ -50,6 +50,7 @@ class FakeMediaStreamTrack {
 class FakeLocalTrack {
 	isMuted = false;
 	stopped = false;
+	sender: object | undefined = undefined;
 	mediaStreamTrack: FakeMediaStreamTrack;
 	/** Constraints each restartTrack() was asked for, so a device switch can be inspected. */
 	readonly restartOptions: Array<VideoCaptureOptions | AudioCaptureOptions | undefined> = [];
@@ -513,6 +514,110 @@ describe('LocalMediaService', () => {
 			await expectAsync(service.setCameraEnabled(false)).toBeResolved();
 
 			expect(livekitSdkService.createLocalTracks).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	describe('opening the camera again on request', () => {
+		it('restarts a camera that is capturing', async () => {
+			await service.acquire();
+
+			await service.refreshCamera();
+
+			expect(video.restartOptions.length).toBe(1);
+			expect(service.camera.enabled()).toBeTrue();
+		});
+
+		it('restarts a camera whose capture ended', async () => {
+			await service.acquire();
+			video.end();
+
+			await service.refreshCamera();
+
+			expect(video.restartOptions.length).toBe(1);
+			expect(service.camera.enabled()).toBeTrue();
+		});
+
+		it('turns back on a camera that was muted without the participant asking', async () => {
+			await service.acquire();
+			await video.mute();
+
+			await service.refreshCamera();
+
+			expect(video.isMuted).toBeFalse();
+			expect(service.camera.enabled()).toBeTrue();
+		});
+
+		it('leaves a camera the participant turned off alone', async () => {
+			await service.acquire();
+			await service.setCameraEnabled(false);
+
+			await service.refreshCamera();
+
+			expect(video.isMuted).toBeTrue();
+			expect(video.restartOptions).toEqual([]);
+		});
+
+		it('turns off, and says so, a camera that could not be opened again', async () => {
+			await service.acquire();
+
+			video.openDevice = () => {
+				throw deviceHeldByAnotherApp();
+			};
+
+			await expectAsync(service.refreshCamera()).toBeRejected();
+
+			expect(video.isMuted).toBeTrue();
+			expect(service.camera.enabled()).toBeFalse();
+			expect(cameraUnavailableNotice()).toBeTrue();
+		});
+
+		it('opens at the next request a camera that could not be opened again', async () => {
+			await service.acquire();
+
+			video.openDevice = () => {
+				throw deviceHeldByAnotherApp();
+			};
+
+			await expectAsync(service.refreshCamera()).toBeRejected();
+
+			video.openDevice = () => {};
+
+			await service.refreshCamera();
+
+			expect(video.isMuted).toBeFalse();
+			expect(service.camera.enabled()).toBeTrue();
+		});
+
+		it('does nothing when no camera was ever opened', async () => {
+			service.applyInitialState({ camera: false, microphone: true });
+			await service.acquire();
+
+			await service.refreshCamera();
+
+			expect(livekitSdkService.createLocalTracks).toHaveBeenCalledTimes(1);
+			expect(video.restartOptions).toEqual([]);
+		});
+
+		it('publishes again a camera that lost its place in the room', async () => {
+			await service.acquire();
+			await service.publish(asParticipant());
+			participant.publishTrack.calls.reset();
+
+			await service.refreshCamera();
+
+			expect(participant.publishTrack).toHaveBeenCalledOnceWith(asTrack(video));
+		});
+
+		it('does not publish a camera that is still published', async () => {
+			await service.acquire();
+			await service.publish(asParticipant());
+			participant.publishTrack.calls.reset();
+			video.sender = {};
+
+			await service.refreshCamera();
+
+			expect(video.restartOptions.length).toBe(1);
+			expect(participant.publishTrack).not.toHaveBeenCalled();
 		});
 	});
 

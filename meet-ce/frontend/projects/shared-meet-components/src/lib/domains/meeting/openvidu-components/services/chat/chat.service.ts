@@ -1,10 +1,13 @@
-import { inject, Service, signal } from '@angular/core';
+import { effect, inject, Service, signal, untracked } from '@angular/core';
 import { ChatMessage } from '../../models/chat.model';
 
 import { DataTopic } from '../../models/data-topic.model';
 import { PanelType } from '../../models/panel.model';
+import { E2eeService } from '../e2ee/e2ee.service';
+import { MeetingLiveKitService } from '../meeting-livekit/meeting-livekit.service';
 import { PanelService } from '../panel/panel.service';
 import { ParticipantService } from '../participant/participant.service';
+import { ChatHistoryStore } from './chat-history.store';
 import { AssetsService } from '../../../../../shared/services/assets.service';
 import { LoggerService } from '../../../../../shared/services/logger.service';
 import { NotificationService } from '../../../../../shared/services/notification.service';
@@ -22,6 +25,9 @@ export class ChatService {
 	private readonly panelService = inject(PanelService);
 	private readonly notificationService = inject(NotificationService);
 	private readonly assets = inject(AssetsService);
+	private readonly meetingLiveKitService = inject(MeetingLiveKitService);
+	private readonly e2eeService = inject(E2eeService);
+	private readonly history = inject(ChatHistoryStore);
 	private log: ILogger = inject(LoggerService).get('ChatService');
 
 	chatMessages = signal<ChatMessage[]>([]);
@@ -30,6 +36,12 @@ export class ChatService {
 	private messageSound: HTMLAudioElement = new Audio(this.assets.chatMessageSound);
 	private messageList: ChatMessage[] = [];
 	private shownId: number | undefined;
+	private roomId = '';
+
+	private readonly roomEffect = effect(() => {
+		if (this.meetingLiveKitService.isConnected()) untracked(() => this.followRoom());
+	});
+
 	constructor() {
 		this.messageSound.volume = 0.6;
 	}
@@ -73,13 +85,40 @@ export class ChatService {
 		}
 	}
 
+	forgetRoom(): void {
+		const roomId = this.meetingLiveKitService.getRoomName() || this.roomId;
+
+		if (roomId) this.history.forget(roomId);
+
+		this.roomId = '';
+		this.messageList = [];
+		this.chatMessages.set([]);
+	}
+
 	private addMessage(message: string, isLocal: boolean, participantName: string) {
+		this.followRoom();
 		this.messageList.push({
 			isLocal,
 			participantName,
 			message
 		});
 		this.chatMessages.set([...this.messageList]);
+
+		if (this.roomId && this.keepsHistory()) this.history.save(this.roomId, this.messageList);
+	}
+
+	private followRoom(): void {
+		const roomId = this.meetingLiveKitService.getRoomName();
+
+		if (!roomId || roomId === this.roomId) return;
+
+		this.roomId = roomId;
+		this.messageList = this.keepsHistory() ? this.history.load(roomId) : [];
+		this.chatMessages.set([...this.messageList]);
+	}
+
+	private keepsHistory(): boolean {
+		return !this.e2eeService.isEnabled;
 	}
 
 	/**

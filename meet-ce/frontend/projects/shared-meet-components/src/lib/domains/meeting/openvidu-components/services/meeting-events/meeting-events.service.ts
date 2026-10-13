@@ -419,6 +419,7 @@ export class MeetingEventsService {
 					participantLeftEvent.reason = ParticipantLeftReason.PARTICIPANT_REMOVED;
 					break;
 				case DisconnectReason.ROOM_DELETED:
+					this.chatService.forgetRoom();
 					participantLeftEvent.reason = ParticipantLeftReason.ROOM_DELETED;
 					break;
 				case DisconnectReason.SIGNAL_CLOSE:
