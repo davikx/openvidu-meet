@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { LoggerService } from '../../../../../shared/services/logger.service';
 import { LocalMediaService } from '../local-media/local-media.service';
 import { MeetingLiveKitService } from '../meeting-livekit/meeting-livekit.service';
-import { RESUBSCRIBE_GAP_MS, VideoRefreshService } from './video-refresh.service';
+import { CAMERA_RESTORE_DELAY_MS, RESUBSCRIBE_GAP_MS, VideoRefreshService } from './video-refresh.service';
 
 class FakePublication {
 	readonly setSubscribed = jasmine.createSpy('setSubscribed');
@@ -20,7 +20,20 @@ describe('VideoRefreshService', () => {
 	let screen: FakePublication;
 	let startVideo: jasmine.Spy;
 	let refreshCamera: jasmine.Spy;
+	let restoreCamera: jasmine.Spy;
+	let visibility: DocumentVisibilityState;
 	let calls: string[];
+
+	const pageShown = (state: DocumentVisibilityState): void => {
+		visibility = state;
+		document.dispatchEvent(new Event('visibilitychange'));
+	};
+
+	const startWatching = (): void => {
+		TestBed.tick();
+		jasmine.clock().tick(CAMERA_RESTORE_DELAY_MS);
+		restoreCamera.calls.reset();
+	};
 
 	const afterTheGap = async (refresh: Promise<void>): Promise<void> => {
 		jasmine.clock().tick(RESUBSCRIBE_GAP_MS);
@@ -40,6 +53,9 @@ describe('VideoRefreshService', () => {
 			return Promise.resolve();
 		});
 		refreshCamera = jasmine.createSpy('refreshCamera').and.resolveTo();
+		restoreCamera = jasmine.createSpy('restoreCamera').and.resolveTo();
+		visibility = 'visible';
+		spyOnProperty(document, 'visibilityState', 'get').and.callFake(() => visibility);
 
 		const room = {
 			startVideo,
@@ -53,7 +69,7 @@ describe('VideoRefreshService', () => {
 			providers: [
 				provideZonelessChangeDetection(),
 				{ provide: MeetingLiveKitService, useValue: { isConnected: connected, getRoom: () => room } },
-				{ provide: LocalMediaService, useValue: { refreshCamera } },
+				{ provide: LocalMediaService, useValue: { refreshCamera, restoreCamera } },
 				{ provide: LoggerService, useValue: { get: () => ({ d: () => {}, w: () => {}, e: () => {} }) } }
 			]
 		});
@@ -157,5 +173,96 @@ describe('VideoRefreshService', () => {
 		expect(startVideo).not.toHaveBeenCalled();
 		expect(camera.setSubscribed).not.toHaveBeenCalled();
 		expect(refreshCamera).not.toHaveBeenCalled();
+	});
+
+	it('brings the camera back a moment after the page is shown again', () => {
+		startWatching();
+
+		pageShown('hidden');
+		pageShown('visible');
+		jasmine.clock().tick(CAMERA_RESTORE_DELAY_MS - 1);
+
+		expect(restoreCamera).not.toHaveBeenCalled();
+
+		jasmine.clock().tick(1);
+
+		expect(restoreCamera).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not touch the camera while the page is hidden', () => {
+		startWatching();
+
+		pageShown('hidden');
+		jasmine.clock().tick(CAMERA_RESTORE_DELAY_MS);
+
+		expect(restoreCamera).not.toHaveBeenCalled();
+	});
+
+	it('does not touch the camera if the page is hidden again before the moment has passed', () => {
+		startWatching();
+
+		pageShown('visible');
+		visibility = 'hidden';
+		jasmine.clock().tick(CAMERA_RESTORE_DELAY_MS);
+
+		expect(restoreCamera).not.toHaveBeenCalled();
+	});
+
+	it('brings the camera back once the room is connected again', () => {
+		startWatching();
+		connected.set(false);
+		TestBed.tick();
+
+		connected.set(true);
+		TestBed.tick();
+		jasmine.clock().tick(CAMERA_RESTORE_DELAY_MS);
+
+		expect(restoreCamera).toHaveBeenCalledTimes(1);
+	});
+
+	it('leaves the camera alone while the room is not connected', () => {
+		startWatching();
+		connected.set(false);
+		TestBed.tick();
+
+		pageShown('visible');
+		jasmine.clock().tick(CAMERA_RESTORE_DELAY_MS);
+
+		expect(restoreCamera).not.toHaveBeenCalled();
+	});
+
+	it('brings the camera back only once when the page is shown several times in a row', () => {
+		startWatching();
+
+		pageShown('visible');
+		pageShown('visible');
+		jasmine.clock().tick(CAMERA_RESTORE_DELAY_MS);
+
+		expect(restoreCamera).toHaveBeenCalledTimes(1);
+	});
+
+	it('lets the camera know when it may no longer be opened', () => {
+		startWatching();
+
+		pageShown('visible');
+		jasmine.clock().tick(CAMERA_RESTORE_DELAY_MS);
+		const mayRun = restoreCamera.calls.mostRecent().args[0] as () => boolean;
+
+		expect(mayRun()).toBeTrue();
+
+		visibility = 'hidden';
+
+		expect(mayRun()).toBeFalse();
+	});
+
+	it('keeps going when the camera cannot be brought back', async () => {
+		restoreCamera.and.rejectWith(new Error('camera busy'));
+		startWatching();
+
+		pageShown('visible');
+		jasmine.clock().tick(CAMERA_RESTORE_DELAY_MS);
+		await settle();
+
+		expect(restoreCamera).toHaveBeenCalledTimes(1);
 	});
 });

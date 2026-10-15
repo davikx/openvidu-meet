@@ -1,6 +1,7 @@
 import { provideZonelessChangeDetection, signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '../../../../shared/services/i18n/translate.service';
+import { MeetingLiveKitService } from '../../openvidu-components/services/meeting-livekit/meeting-livekit.service';
 import { VideoRefreshService } from '../../openvidu-components/services/video-refresh/video-refresh.service';
 import { MeetingStateService } from '../../services/meeting-state.service';
 import { MeetingVideoRefreshButtonComponent } from './meeting-video-refresh-button.component';
@@ -9,6 +10,7 @@ describe('MeetingVideoRefreshButtonComponent', () => {
 	let fixture: ComponentFixture<MeetingVideoRefreshButtonComponent>;
 	let refreshing: WritableSignal<boolean>;
 	let isAlone: WritableSignal<boolean>;
+	let connected: WritableSignal<boolean>;
 	let refresh: jasmine.Spy;
 
 	const button = (): HTMLButtonElement => fixture.nativeElement.querySelector('#refresh-video-button');
@@ -16,6 +18,7 @@ describe('MeetingVideoRefreshButtonComponent', () => {
 	beforeEach(async () => {
 		refreshing = signal(false);
 		isAlone = signal(false);
+		connected = signal(true);
 		refresh = jasmine.createSpy('refresh').and.resolveTo();
 
 		await TestBed.configureTestingModule({
@@ -24,6 +27,7 @@ describe('MeetingVideoRefreshButtonComponent', () => {
 				provideZonelessChangeDetection(),
 				{ provide: VideoRefreshService, useValue: { refreshing, refresh } },
 				{ provide: MeetingStateService, useValue: { isAlone } },
+				{ provide: MeetingLiveKitService, useValue: { isConnected: connected } },
 				{
 					provide: TranslateService,
 					useValue: { translationsLoaded: () => 0, translate: (key: string) => key }
@@ -75,5 +79,17 @@ describe('MeetingVideoRefreshButtonComponent', () => {
 		fixture.detectChanges();
 
 		expect(icon().classList.contains('refreshing')).toBeTrue();
+	});
+
+	it('cannot be pressed until the connection is back', () => {
+		connected.set(false);
+		fixture.detectChanges();
+
+		expect(button().disabled).toBeTrue();
+
+		connected.set(true);
+		fixture.detectChanges();
+
+		expect(button().disabled).toBeFalse();
 	});
 });

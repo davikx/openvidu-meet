@@ -32,6 +32,7 @@ export class LocalDevice<T extends LocalTrack = LocalTrack> {
 	readonly enabled: Signal<boolean> = computed(() =>
 		this._acquired() ? this._capturing() : this._wanted() && this.available()
 	);
+	captureLost = false;
 
 	constructor(
 		readonly kind: Track.Kind,
@@ -53,18 +54,26 @@ export class LocalDevice<T extends LocalTrack = LocalTrack> {
 		const follow = () => {
 			this._capturing.set(isCapturing(track));
 			this._mediaStreamTrack.set(track.mediaStreamTrack);
+
+			if (isCapturing(track)) this.captureLost = false;
+		};
+
+		const lose = () => {
+			this.captureLost = true;
 		};
 
 		track.on(TrackEvent.Muted, follow);
 		track.on(TrackEvent.Unmuted, follow);
 		track.on(TrackEvent.Restarted, follow);
 		track.on(TrackEvent.Ended, follow);
+		track.on(TrackEvent.Ended, lose);
 
 		this.unfollow = () => {
 			track.off(TrackEvent.Muted, follow);
 			track.off(TrackEvent.Unmuted, follow);
 			track.off(TrackEvent.Restarted, follow);
 			track.off(TrackEvent.Ended, follow);
+			track.off(TrackEvent.Ended, lose);
 		};
 
 		this._track.set(track);
@@ -87,5 +96,6 @@ export class LocalDevice<T extends LocalTrack = LocalTrack> {
 		this._track.set(undefined);
 		this._mediaStreamTrack.set(undefined);
 		this._capturing.set(false);
+		this.captureLost = false;
 	}
 }

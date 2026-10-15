@@ -5,7 +5,7 @@ import { cameraCaptureOptions, microphoneCaptureOptions } from '../../models/med
 import type { ParticipantModel } from '../../models/participant.model';
 import { DeviceService } from '../device/device.service';
 import type { CreateLocalTracksOptions, LocalAudioTrack, LocalTrack, LocalVideoTrack } from '../livekit';
-import { MediaDeviceFailure, Track } from '../livekit';
+import { MediaDeviceFailure, Track, TrackEvent } from '../livekit';
 import { LivekitSdkService } from '../livekit/livekit-sdk.service';
 import { VideoTrackProcessorService } from '../track-processor/video-track-processor.service';
 import { LoggerService } from '../../../../../shared/services/logger.service';
@@ -22,6 +22,21 @@ export interface InitialMediaState {
 
 /** Long enough to read which device failed and why, short enough not to sit on top of the meeting. */
 const NOTICE_DURATION_MS = 10_000;
+
+export const LIBRARY_RESTART_WAIT_MS = 3000;
+
+const restartedWithin = (track: LocalTrack, timeoutMs: number): Promise<void> =>
+	new Promise((resolve) => {
+		const settle = (): void => {
+			clearTimeout(timer);
+			track.off(TrackEvent.Restarted, settle);
+			resolve();
+		};
+
+		const timer = setTimeout(settle, timeoutMs);
+
+		track.on(TrackEvent.Restarted, settle);
+	});
 
 /**
  * Owns the local participant's camera and microphone for the whole entry: opens them for the
@@ -96,21 +111,22 @@ export class LocalMediaService {
 	}
 
 	refreshCamera(): Promise<void> {
+		return this.run(() => this.reopenCamera());
+	}
+
+	restoreCamera(canRun: () => boolean): Promise<void> {
 		return this.run(async () => {
 			const track = this.camera.track();
 
-			if (!track || !this.camera.wanted()) return;
+			if (!track || !canRun() || !this.needsRestore(track)) return;
 
-			try {
-				await acquireDevice<unknown>(() => (track.isMuted ? track.unmute() : track.restartTrack()), this.log);
-			} catch (error) {
-				await track.mute();
-				this.reportUnavailable(Track.Kind.Video);
+			if (!track.isMuted && !isCapturing(track)) {
+				await restartedWithin(track, LIBRARY_RESTART_WAIT_MS);
 
-				throw error;
+				if (!canRun() || !this.needsRestore(track)) return;
 			}
 
-			if (!track.sender) await this.publishTracks([track]);
+			await this.reopenCamera();
 		});
 	}
 
@@ -171,6 +187,35 @@ export class LocalMediaService {
 		// unmute() reacquires a camera whose capture mute() stopped; a capture that ended on its own,
 		// as when the device is unplugged, is not muted and has to be restarted explicitly.
 		await acquireDevice<unknown>(() => (track.isMuted ? track.unmute() : track.restartTrack()), this.log);
+	}
+
+	private needsRestore(track: LocalVideoTrack): boolean {
+		return !isCapturing(track) || track.isUpstreamPaused || (!track.sender && !!this.participant);
+	}
+
+	private async reopenCamera(): Promise<void> {
+		const track = this.camera.track();
+
+		if (!track || !this.camera.wanted() || (track.isMuted && !this.camera.captureLost)) return;
+
+		try {
+			await acquireDevice<unknown>(() => (track.isMuted ? track.unmute() : track.restartTrack()), this.log);
+		} catch (error) {
+			await track.mute();
+			this.camera.captureLost = true;
+			this.reportUnavailable(Track.Kind.Video);
+
+			throw error;
+		}
+
+		if (track.isMuted) {
+			track.mediaStreamTrack.stop();
+			return;
+		}
+
+		if (!track.sender) await this.publishTracks([track]);
+
+		await track.resumeUpstream();
 	}
 
 	private switchTo(device: LocalDevice, deviceId: string): Promise<void> {

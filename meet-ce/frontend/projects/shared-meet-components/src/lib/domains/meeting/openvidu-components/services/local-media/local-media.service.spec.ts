@@ -16,7 +16,7 @@ import type {
 import { Track } from '../livekit';
 import { LivekitSdkService } from '../livekit/livekit-sdk.service';
 import { VideoTrackProcessorService } from '../track-processor/video-track-processor.service';
-import { LocalMediaService } from './local-media.service';
+import { LIBRARY_RESTART_WAIT_MS, LocalMediaService } from './local-media.service';
 
 class LoggerServiceStub {
 	get() {
@@ -49,6 +49,7 @@ class FakeMediaStreamTrack {
  */
 class FakeLocalTrack {
 	isMuted = false;
+	isUpstreamPaused = false;
 	stopped = false;
 	sender: object | undefined = undefined;
 	mediaStreamTrack: FakeMediaStreamTrack;
@@ -99,6 +100,10 @@ class FakeLocalTrack {
 	stop(): void {
 		this.stopped = true;
 		this.mediaStreamTrack.stop();
+	}
+
+	async resumeUpstream(): Promise<void> {
+		this.isUpstreamPaused = false;
 	}
 
 	detach(): void {}
@@ -539,6 +544,7 @@ describe('LocalMediaService', () => {
 
 		it('turns back on a camera that was muted without the participant asking', async () => {
 			await service.acquire();
+			video.end();
 			await video.mute();
 
 			await service.refreshCamera();
@@ -618,6 +624,121 @@ describe('LocalMediaService', () => {
 
 			expect(video.restartOptions.length).toBe(1);
 			expect(participant.publishTrack).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('bringing the camera back when the page is shown again', () => {
+		beforeEach(async () => {
+			await service.acquire();
+			await service.publish(asParticipant());
+			participant.publishTrack.calls.reset();
+			video.sender = {};
+		});
+
+		const always = () => true;
+
+		it('leaves a camera that is working alone', async () => {
+			await service.restoreCamera(always);
+
+			expect(video.restartOptions).toEqual([]);
+			expect(participant.publishTrack).not.toHaveBeenCalled();
+		});
+
+		it('turns back on a camera that the library muted after losing it', async () => {
+			video.end();
+			await video.mute();
+
+			await service.restoreCamera(always);
+
+			expect(video.isMuted).toBeFalse();
+			expect(service.camera.enabled()).toBeTrue();
+		});
+
+		it('leaves alone a camera that was muted without losing it, as by a moderator', async () => {
+			await video.mute();
+
+			await service.restoreCamera(always);
+			await service.refreshCamera();
+
+			expect(video.isMuted).toBeTrue();
+			expect(video.restartOptions).toEqual([]);
+		});
+
+		it('lets the library finish reopening the camera instead of reopening it again', async () => {
+			video.mediaStreamTrack.stop();
+
+			const restoring = service.restoreCamera(always);
+
+			for (let turn = 0; turn < 10; turn++) await Promise.resolve();
+
+			await video.restartTrack();
+			await restoring;
+
+			expect(video.restartOptions.length).toBe(1);
+		});
+
+		it('opens again a camera whose capture ended when the library does not', async () => {
+			jasmine.clock().install();
+
+			try {
+				video.mediaStreamTrack.stop();
+
+				const restoring = service.restoreCamera(always);
+
+				for (let turn = 0; turn < 10; turn++) await Promise.resolve();
+
+				jasmine.clock().tick(LIBRARY_RESTART_WAIT_MS);
+				await restoring;
+			} finally {
+				jasmine.clock().uninstall();
+			}
+
+			expect(video.restartOptions.length).toBe(1);
+			expect(service.camera.enabled()).toBeTrue();
+		});
+
+		it('publishes again a camera that lost its place in the room', async () => {
+			video.sender = undefined;
+
+			await service.restoreCamera(always);
+
+			expect(participant.publishTrack).toHaveBeenCalledOnceWith(asTrack(video));
+		});
+
+		it('sends again a camera whose sending was paused', async () => {
+			video.isUpstreamPaused = true;
+
+			await service.restoreCamera(always);
+
+			expect(video.isUpstreamPaused).toBeFalse();
+		});
+
+		it('leaves a camera the participant turned off alone', async () => {
+			await service.setCameraEnabled(false);
+
+			await service.restoreCamera(always);
+
+			expect(video.isMuted).toBeTrue();
+			expect(video.restartOptions).toEqual([]);
+		});
+
+		it('does nothing once it may no longer run, as when the page was hidden again', async () => {
+			video.end();
+			await video.mute();
+
+			await service.restoreCamera(() => false);
+
+			expect(video.isMuted).toBeTrue();
+		});
+	});
+
+	describe('bringing the camera back before joining', () => {
+		it('does not reopen a working camera that is not published yet', async () => {
+			await service.acquire();
+
+			await service.restoreCamera(() => true);
+
+			expect(video.restartOptions).toEqual([]);
 		});
 	});
 
