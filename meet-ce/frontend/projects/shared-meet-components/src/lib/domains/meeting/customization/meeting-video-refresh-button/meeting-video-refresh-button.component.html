@@ -3,7 +3,7 @@
 		id="refresh-video-button"
 		class="refresh-video-button"
 		mat-flat-button
-		[disabled]="refreshing()"
+		[disabled]="refreshing() || !connected()"
 		(click)="refresh()"
 	>
 		<mat-icon [class.refreshing]="refreshing()">refresh</mat-icon>
