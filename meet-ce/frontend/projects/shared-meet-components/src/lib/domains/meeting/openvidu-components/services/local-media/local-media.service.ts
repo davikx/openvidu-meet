@@ -120,7 +120,7 @@ export class LocalMediaService {
 
 			if (!track || !canRun() || !this.needsRestore(track)) return;
 
-			if (!track.isMuted && !isCapturing(track)) {
+			if (!track.isMuted && !isCapturing(track) && !!track.sender) {
 				await restartedWithin(track, LIBRARY_RESTART_WAIT_MS);
 
 				if (!canRun() || !this.needsRestore(track)) return;
@@ -187,6 +187,8 @@ export class LocalMediaService {
 		// unmute() reacquires a camera whose capture mute() stopped; a capture that ended on its own,
 		// as when the device is unplugged, is not muted and has to be restarted explicitly.
 		await acquireDevice<unknown>(() => (track.isMuted ? track.unmute() : track.restartTrack()), this.log);
+
+		if (!track.sender) await this.publishTracks([track]);
 	}
 
 	private needsRestore(track: LocalVideoTrack): boolean {

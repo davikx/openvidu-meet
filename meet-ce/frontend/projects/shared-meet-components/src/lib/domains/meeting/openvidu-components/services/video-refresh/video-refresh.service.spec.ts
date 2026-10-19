@@ -208,14 +208,14 @@ describe('VideoRefreshService', () => {
 		expect(restoreCamera).not.toHaveBeenCalled();
 	});
 
-	it('brings the camera back once the room is connected again', () => {
+	it('brings the camera back as soon as the room is connected again', () => {
 		startWatching();
 		connected.set(false);
 		TestBed.tick();
 
 		connected.set(true);
 		TestBed.tick();
-		jasmine.clock().tick(CAMERA_RESTORE_DELAY_MS);
+		jasmine.clock().tick(0);
 
 		expect(restoreCamera).toHaveBeenCalledTimes(1);
 	});

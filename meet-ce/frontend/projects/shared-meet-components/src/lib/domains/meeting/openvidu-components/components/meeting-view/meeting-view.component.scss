@@ -233,9 +233,9 @@ $side-panel-width: 380px;
 }
 
 #meeting-stage.short-landscape {
-	--ov-status-rail-height: 0px;
+	--ov-status-rail-height: 0px !important;
 
-	.status-rail {
+	ov-status-rail {
 		display: none;
 	}
 
@@ -243,10 +243,10 @@ $side-panel-width: 380px;
 	&:has(.ending-soon-chip),
 	&:has(.e2ee-chip),
 	&:has(.status-rail-end ov-hidden-participants-indicator) {
-		--ov-status-rail-height: 37px;
+		--ov-status-rail-height: 37px !important;
 
-		.status-rail {
-			display: flex;
+		ov-status-rail {
+			display: block;
 		}
 	}
 

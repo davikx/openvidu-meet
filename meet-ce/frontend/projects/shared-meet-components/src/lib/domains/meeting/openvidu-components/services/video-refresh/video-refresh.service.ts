@@ -26,19 +26,21 @@ export class VideoRefreshService {
 
 		let timer: ReturnType<typeof setTimeout> | undefined;
 
-		const restore = () => {
+		const restoreAfter = (delayMs: number) => {
 			clearTimeout(timer);
 
 			if (this.document.visibilityState === 'visible') {
-				timer = setTimeout(() => void this.restoreCamera(), CAMERA_RESTORE_DELAY_MS);
+				timer = setTimeout(() => void this.restoreCamera(), delayMs);
 			}
 		};
 
-		restore();
-		this.document.addEventListener('visibilitychange', restore);
+		const restoreOnReturn = () => restoreAfter(CAMERA_RESTORE_DELAY_MS);
+
+		restoreAfter(0);
+		this.document.addEventListener('visibilitychange', restoreOnReturn);
 		onCleanup(() => {
 			clearTimeout(timer);
-			this.document.removeEventListener('visibilitychange', restore);
+			this.document.removeEventListener('visibilitychange', restoreOnReturn);
 		});
 	});
 

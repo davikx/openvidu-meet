@@ -697,11 +697,44 @@ describe('LocalMediaService', () => {
 			expect(service.camera.enabled()).toBeTrue();
 		});
 
+		it('opens again at once a camera that ended and lost its place in the room', async () => {
+			jasmine.clock().install();
+
+			try {
+				video.sender = undefined;
+				video.mediaStreamTrack.stop();
+
+				const restoring = service.restoreCamera(always);
+
+				for (let turn = 0; turn < 10; turn++) await Promise.resolve();
+
+				expect(video.restartOptions.length).toBe(1);
+
+				jasmine.clock().tick(LIBRARY_RESTART_WAIT_MS);
+				await restoring;
+			} finally {
+				jasmine.clock().uninstall();
+			}
+
+			expect(participant.publishTrack).toHaveBeenCalledOnceWith(asTrack(video));
+		});
+
 		it('publishes again a camera that lost its place in the room', async () => {
 			video.sender = undefined;
 
 			await service.restoreCamera(always);
 
+			expect(participant.publishTrack).toHaveBeenCalledOnceWith(asTrack(video));
+		});
+
+		it('publishes again a camera turned back on with its own button after it lost its place in the room', async () => {
+			video.sender = undefined;
+			video.end();
+			await video.mute();
+
+			await service.setCameraEnabled(true);
+
+			expect(video.isMuted).toBeFalse();
 			expect(participant.publishTrack).toHaveBeenCalledOnceWith(asTrack(video));
 		});
 
